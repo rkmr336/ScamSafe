@@ -6,7 +6,7 @@ from app.db.database import engine, Base
 # Import ALL models BEFORE create_all so SQLAlchemy registers them
 from app.models.user import User
 from app.models.analysis import URLAnalysis, MessageAnalysis, PhoneAnalysis, AnalysisHistory
-from app.models.feedback import Feedback
+from app.models.feedback import UserFeedback
 from app.models.scam_report import ScamReport
 
 # Create database tables (now all models are registered)
