@@ -40,7 +40,12 @@ def analyze_phone(phone_str: str) -> Dict[str, Any]:
                 spam_likelihood += 50.0
                 risk_level = "HIGH"
                 verdict = "DANGEROUS"
-                
+        else:
+            # The number is syntactically parsable but not a valid real-world number
+            risk_level = "MEDIUM"
+            verdict = "SUSPICIOUS"
+            spam_likelihood = 60.0
+            
     except phonenumbers.NumberParseException:
         is_valid = False
         risk_level = "CRITICAL"
