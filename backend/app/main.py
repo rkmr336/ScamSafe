@@ -3,9 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db.database import engine, Base
 
-# We will import routers here later
+# Import ALL models BEFORE create_all so SQLAlchemy registers them
+from app.models.user import User
+from app.models.analysis import URLAnalysis, MessageAnalysis, PhoneAnalysis, AnalysisHistory
+from app.models.feedback import Feedback
+from app.models.scam_report import ScamReport
 
-# Create database tables
+# Create database tables (now all models are registered)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
