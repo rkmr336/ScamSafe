@@ -27,56 +27,80 @@ def get_optional_user(db: Session = Depends(get_db)):
 
 @router.post("/url")
 def scan_url(request: URLAnalysisRequest, db: Session = Depends(get_db)):
-    result_data = analyze_url(request.url)
-    
-    # Save to db
-    db_analysis = URLAnalysis(**result_data)
-    db.add(db_analysis)
-    db.commit()
-    db.refresh(db_analysis)
-    
-    return {
-        "success": True,
-        "status_code": 200,
-        "message": "URL analysis completed",
-        "data": URLAnalysisResponse.from_orm(db_analysis).dict(),
-        "error": None
-    }
+    try:
+        result_data = analyze_url(request.url)
+        
+        # Check if URL already exists (unique constraint)
+        existing = db.query(URLAnalysis).filter(URLAnalysis.url == result_data["url"]).first()
+        if existing:
+            # Update existing record with fresh analysis
+            for key, value in result_data.items():
+                setattr(existing, key, value)
+            db.commit()
+            db.refresh(existing)
+            db_analysis = existing
+        else:
+            db_analysis = URLAnalysis(**result_data)
+            db.add(db_analysis)
+            db.commit()
+            db.refresh(db_analysis)
+        
+        return {
+            "success": True,
+            "status_code": 200,
+            "message": "URL analysis completed",
+            "data": URLAnalysisResponse.from_orm(db_analysis).dict(),
+            "error": None
+        }
+    except Exception as e:
+        db.rollback()
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @router.post("/message")
 def scan_message(request: MessageAnalysisRequest, db: Session = Depends(get_db)):
-    result_data = analyze_message(request.message_text, request.message_language)
-    
-    db_analysis = MessageAnalysis(
-        message_text=request.message_text,
-        message_language=request.message_language,
-        **result_data
-    )
-    db.add(db_analysis)
-    db.commit()
-    db.refresh(db_analysis)
-    
-    return {
-        "success": True,
-        "status_code": 200,
-        "message": "Message analysis completed",
-        "data": MessageAnalysisResponse.from_orm(db_analysis).dict(),
-        "error": None
-    }
+    try:
+        result_data = analyze_message(request.message_text, request.message_language)
+        
+        db_analysis = MessageAnalysis(
+            message_text=request.message_text,
+            message_language=request.message_language,
+            **result_data
+        )
+        db.add(db_analysis)
+        db.commit()
+        db.refresh(db_analysis)
+        
+        return {
+            "success": True,
+            "status_code": 200,
+            "message": "Message analysis completed",
+            "data": MessageAnalysisResponse.from_orm(db_analysis).dict(),
+            "error": None
+        }
+    except Exception as e:
+        db.rollback()
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @router.post("/phone")
 def scan_phone(request: PhoneAnalysisRequest, db: Session = Depends(get_db)):
-    result_data = analyze_phone(request.phone_number)
-    
-    db_analysis = PhoneAnalysis(**result_data)
-    db.add(db_analysis)
-    db.commit()
-    db.refresh(db_analysis)
-    
-    return {
-        "success": True,
-        "status_code": 200,
-        "message": "Phone analysis completed",
-        "data": PhoneAnalysisResponse.from_orm(db_analysis).dict(),
-        "error": None
-    }
+    try:
+        result_data = analyze_phone(request.phone_number)
+        
+        db_analysis = PhoneAnalysis(**result_data)
+        db.add(db_analysis)
+        db.commit()
+        db.refresh(db_analysis)
+        
+        return {
+            "success": True,
+            "status_code": 200,
+            "message": "Phone analysis completed",
+            "data": PhoneAnalysisResponse.from_orm(db_analysis).dict(),
+            "error": None
+        }
+    except Exception as e:
+        db.rollback()
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
